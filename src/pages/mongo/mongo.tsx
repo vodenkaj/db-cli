@@ -17,7 +17,6 @@ import {
 export const Mongo = ({ uri }: PageProps & { uri: string }) => {
     const { mode } = useContext(InputStateContext);
 
-    const [db, setDatabase] = useState<Db>();
     const [invoker, setInvoker] = useState<MongoCommandInvoker>();
     const [localInput, setLocalInput] = useState("");
 
@@ -25,7 +24,6 @@ export const Mongo = ({ uri }: PageProps & { uri: string }) => {
         (async () => {
             const mongo = new MongoClient(uri);
             await mongo.connect();
-            setDatabase(mongo.db());
             const invoker = new MongoCommandInvoker(mongo);
             await invoker.prepareCommandNames();
             setInvoker(invoker);
@@ -81,7 +79,7 @@ export const Mongo = ({ uri }: PageProps & { uri: string }) => {
         setLocalInput(input);
     };
 
-    if (!db || !invoker || !invoker.commandNames) {
+    if (!invoker || !invoker.commandNames) {
         return (
             <Box>
                 <Spinner />
@@ -94,7 +92,7 @@ export const Mongo = ({ uri }: PageProps & { uri: string }) => {
         <Box>
             <Input
                 isActive={mode === "INSERT"}
-                prefix="> "
+                prefix={`${invoker.db.databaseName}> `}
                 onInputHandler={inputHandler}
                 suggestionProps={{
                     input: localInput,

@@ -89,6 +89,9 @@ export class MongoCommandInvoker {
     }
 
     async prepareCommandNames() {
+        const dbs = (await this.db.admin().listDatabases()).databases.map(
+            ({ name }) => name,
+        );
         const collections = (await this.db.collections()).map(
             ({ collectionName }) => collectionName,
         );
@@ -97,7 +100,10 @@ export class MongoCommandInvoker {
             .flatMap((cmd) =>
                 collections.map((collection) => `db.${collection}.${cmd}`),
             );
-        this.commandNames = [...collectionCommandsKeys, ...generalCommands];
+        const generalCommandsKeys = generalCommands.flatMap((cmd) =>
+            dbs.map((db) => `${cmd} ${db}`),
+        );
+        this.commandNames = [...collectionCommandsKeys, ...generalCommandsKeys];
 
         return this.commandNames;
     }
@@ -127,7 +133,6 @@ export const commands: Record<
         this: MongoCommandInvoker,
         name: string,
     ): Promise<void> {
-        console.log(name);
         this.db = this.client.db(name);
         await this.prepareCommandNames();
     },

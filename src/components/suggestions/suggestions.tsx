@@ -31,6 +31,9 @@ export const Suggestions = ({ input, values, setInput }: SugestionsProps) => {
                 setSelected(0);
             }
         }
+        if (inputState.lastKey?.return || inputState.lastKey?.delete) {
+            setSelected(-1);
+        }
     }, [inputState]);
 
     useEffect(() => {
