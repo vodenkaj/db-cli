@@ -17,7 +17,7 @@ type Props = {
     prefix?: string;
     isActive: boolean;
     onInputHandler?: OnInputHandler;
-    suggestionProps?: SugestionsProps;
+    suggestionProps?: Omit<SugestionsProps, "input"> & { input?: string };
 };
 
 export const Input = ({
@@ -36,7 +36,13 @@ export const Input = ({
         if (!suggestionProps) {
             return null;
         }
-        return <Suggestions {...suggestionProps} setInput={setInput} />;
+        return (
+            <Suggestions
+                {...suggestionProps}
+                input={suggestionProps.input ?? input}
+                setInput={setInput}
+            />
+        );
     }, [suggestionProps]);
 
     return (

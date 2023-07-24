@@ -1,1 +1,1 @@
-export * from './suggestions.js';
+export * from "./suggestions.js";

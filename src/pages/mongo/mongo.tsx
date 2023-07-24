@@ -97,6 +97,9 @@ export const Mongo = ({ uri }: PageProps & { uri: string }) => {
                 suggestionProps={{
                     input: localInput,
                     values: invoker.commandNames,
+                    options: {
+                        matchingAlgorithm: "prefix",
+                    },
                 }}
             />
         </Box>

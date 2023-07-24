@@ -1,21 +1,38 @@
 import { Box, Text } from "ink";
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import fuzzy from "fuzzy";
 
 import { InputStateContext } from "@contexts/index.js";
 import { toPrefixTree } from "utils.js";
+
+type MatchingAlgorithm = "fuzzy" | "prefix";
+type Options = {
+    matchingAlgorithm?: MatchingAlgorithm;
+    showAllOnEmpty?: boolean;
+};
 
 export type SugestionsProps = {
     input: string;
     values: string[];
     setInput?: (value: string) => void;
+    options?: Options;
 };
 
-export const Suggestions = ({ input, values, setInput }: SugestionsProps) => {
+export const Suggestions = ({
+    input,
+    values,
+    setInput,
+    options = { matchingAlgorithm: "fuzzy", showAllOnEmpty: false },
+}: SugestionsProps) => {
     const { inputState } = useContext(InputStateContext);
     const [filteredValues, setFilteredValues] = useState<string[]>([]);
     const [selected, setSelected] = useState(-1);
-    const prefixTree = useMemo(() => {
-        return toPrefixTree(values);
+    const memoizedValues = useMemo(() => {
+        if (options.matchingAlgorithm === "prefix") {
+            return toPrefixTree(values);
+        } else {
+            return values;
+        }
     }, [values]);
 
     useEffect(() => {
@@ -37,7 +54,18 @@ export const Suggestions = ({ input, values, setInput }: SugestionsProps) => {
     }, [inputState]);
 
     useEffect(() => {
-        const fValues = prefixTree[input]?.slice(0, 5) ?? [];
+        let fValues;
+        if (!input.length && options.showAllOnEmpty) {
+            fValues = values;
+        } else if (options.matchingAlgorithm === "prefix") {
+            fValues =
+                (memoizedValues as Record<string, string[]>)[input]?.slice(
+                    0,
+                    5,
+                ) ?? [];
+        } else {
+            fValues = values.filter((value) => fuzzy.match(input, value));
+        }
         setFilteredValues(fValues);
     }, [input, values]);
 
