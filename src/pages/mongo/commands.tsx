@@ -121,6 +121,8 @@ export const isValidCollectionCommand = (
     return collectionCommands.includes(command as any);
 };
 
+const DEFAULT_LIMIT = 100 as const;
+
 export const commands: Record<
     Command,
     (
@@ -171,9 +173,21 @@ export const commands: Record<
     find: async function (
         this: MongoCommandInvoker,
         collection: string,
+        args,
     ): Promise<void> {
-        const data = await this.db.collection(collection).findOne();
-        console.log(data);
+        const [filter, proj] = args;
+        const res = [];
+        for await (const record of this.db
+            .collection(collection)
+            .find(filter, { projection: proj, limit: DEFAULT_LIMIT })) {
+            res.push(record);
+        }
+        if (res.length === DEFAULT_LIMIT) {
+            console.warn(
+                `Query would return more than maximum allowed records, returning first ${DEFAULT_LIMIT}`,
+            );
+        }
+        console.log(res);
     },
     findOne: async function (
         this: MongoCommandInvoker,

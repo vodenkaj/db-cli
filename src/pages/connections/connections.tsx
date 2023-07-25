@@ -1,5 +1,5 @@
 import { Box } from "ink";
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo } from "react";
 
 import { ConfigContext } from "@contexts/index.js";
 import { Input, OnInputHandler } from "@comps/input/input.js";

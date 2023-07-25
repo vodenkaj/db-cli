@@ -1,8 +1,9 @@
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
-import { Db, MongoClient } from "mongodb";
+import { MongoClient } from "mongodb";
 import React, { useContext } from "react";
 import { useEffect, useState } from "react";
+import XRegExp from "xregexp";
 
 import { Input, OnInputHandler } from "@comps/input/input.js";
 import { InputStateContext } from "@contexts/input-state/input-state.js";
@@ -49,21 +50,34 @@ export const Mongo = ({ uri }: PageProps & { uri: string }) => {
                     collectionName,
                     collectionCommand,
                     collectionArgs = null,
-                ] = input.split(/^db\.(\w+)\.(\w+)\((|.+)\)/);
+                ] = input.split(/^db\.(\w+)\.(\w+)\((.*)\)/);
                 if (isValidGeneralCommand(generalCommand)) {
                     invoker?.invokeGeneralCommand(
                         generalCommand,
                         ...generalArgs,
                     );
                 } else if (isValidCollectionCommand(collectionCommand)) {
-                    let args = collectionArgs?.trim().length
-                        ? JSON.parse(collectionArgs)
-                        : [];
-                    args = Array.isArray(args) ? args : [args];
+                    let args;
+                    if (collectionArgs?.match(/^{.*}$/)) {
+                        const [filter, proj = ""] = XRegExp.matchRecursive(
+                            collectionArgs ?? "",
+                            "\\{",
+                            "\\}",
+                            "g",
+                        );
+                        args = [filter, proj].map((v) => eval(`({${v}})`));
+                    } else if (collectionArgs?.match(/^\[.*\]$/)) {
+                        const [aggregation] = XRegExp.matchRecursive(
+                            collectionArgs ?? "",
+                            "\\[",
+                            "\\]",
+                        );
+                        args = eval(`([${aggregation}])`);
+                    }
                     invoker?.invokeCollectionCommand(
                         collectionCommand,
                         collectionName,
-                        args,
+                        args ?? [],
                     );
                 } else {
                     console.error("Invalid command");
